@@ -3,19 +3,23 @@ import { useContext } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 
 export default function Navbar() {
-  const { isAuthenticated } = useContext(AuthContext);
+  const { isAuthenticated, setIsAuthenticated } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
       const refreshToken = localStorage.getItem('refreshToken');
-      await fetch('http://localhost:5000/auth/logout', {
+      const response = await fetch('http://localhost:5000/auth/logout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken }),
       });
+      if (!response.ok) {
+        throw new Error('Logout failed');
+      }
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
+      setIsAuthenticated(false); // Update AuthContext
       navigate('/login');
     } catch (err) {
       console.error('Logout error:', err);
@@ -29,12 +33,12 @@ export default function Navbar() {
           AquaNexus
         </Link>
         <div className="space-x-4">
-          <a
-            href="#providers"
+          <Link
+            to="/providers"
             className="text-gray-600 hover:text-blue-600 px-3 py-2"
           >
             Providers
-          </a>
+          </Link>
           <a
             href="#how-it-works"
             className="text-gray-600 hover:text-blue-600 px-3 py-2"
