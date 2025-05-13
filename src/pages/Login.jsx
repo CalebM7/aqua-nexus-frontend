@@ -28,7 +28,17 @@ const Login = () => {
       localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('refreshToken', data.refreshToken);
       setIsAuthenticated(true);
-      navigate('/');
+      // Fetch user role
+      const userResponse = await fetch('http://localhost:5000/auth/me', {
+        headers: { 'Authorization': `Bearer ${data.accessToken}` },
+      });
+      if (!userResponse.ok) throw new Error('Failed to fetch user role');
+      const userData = await userResponse.json();
+      if (userData.role === 'provider') {
+        navigate('/dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       setError(err.message || 'An unexpected error occurred');
     } finally {
