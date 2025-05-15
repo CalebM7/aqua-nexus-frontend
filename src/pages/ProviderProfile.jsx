@@ -1,34 +1,15 @@
 import { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
+import axios from "axios";
 
 export default function ProviderProfile() {
   const { id } = useParams();
   const [provider, setProvider] = useState(null);
   const [error, setError] = useState(null);
-  const { refreshToken } = useContext(AuthContext);
+  const [messageContent, setMessageContent] = useState("");
+  const { user, refreshToken } = useContext(AuthContext);
   const navigate = useNavigate();
-
-  const handleContact = async () => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch("http://localhost:5000/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          providerId: provider.user_id,
-          content: "Interested in your services!",
-        }),
-      });
-      if (!response.ok) throw new Error("Failed to send message");
-      alert("Message sent!");
-    } catch (err) {
-      setError(err.message);
-    }
-  };
 
   useEffect(() => {
     const fetchProvider = async () => {
@@ -38,32 +19,54 @@ export default function ProviderProfile() {
           navigate("/login");
           return;
         }
-        let response = await fetch(`http://localhost:5000/provider/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        let response = await axios.get(`http://localhost:5000/provider/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
         if (response.status === 401 || response.status === 403) {
           token = await refreshToken();
           if (!token) return;
-          response = await fetch(`http://localhost:5000/provider/${id}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+          response = await axios.get(`http://localhost:5000/provider/${id}`, {
+            headers: { Authorization: `Bearer ${token}` },
           });
         }
-        if (!response.ok) throw new Error("Failed to fetch provider");
-        const data = await response.json();
-        setProvider(data);
+        setProvider(response.data);
       } catch (err) {
         setError(err.message);
+        console.error("Fetch error:", err);
       }
     };
     fetchProvider();
   }, [id, navigate, refreshToken]);
 
-  if (error)
-    return <div className="text-center mt-8 text-red-500">{error}</div>;
+  const handleContact = async (e) => {
+    e.preventDefault();
+    if (!messageContent.trim()) {
+      setError("Message content cannot be empty");
+      return;
+    }
+    try {
+      const token = localStorage.getItem("accessToken");
+      await axios.post(
+        "http://localhost:5000/messages",
+        {
+          providerId: provider.user_id,
+          content: messageContent,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setMessageContent("");
+      alert("Message sent!");
+    } catch (err) { // <--- Fixed: changed "contact" to "catch"
+      setError(err.message);
+      console.error("Contact error:", err);
+    }
+  };
+
+  if (error) return <div className="text-center mt-8 text-red-500">{error}</div>;
   if (!provider) return <div className="text-center mt-8">Loading...</div>;
 
   return (
@@ -102,7 +105,7 @@ export default function ProviderProfile() {
                 }
               })}
               <span className="text-gray-600 text-sm ml-2">
-                ({provider.rating} stars | {provider.reviews || 0} Reviews)
+                ({provider.rating || "0"} stars | {provider.reviews || 0} Reviews)
               </span>
             </div>
             <div className="mb-4 space-x-2">
@@ -136,12 +139,22 @@ export default function ProviderProfile() {
             <p className="text-gray-600 mb-4">
               Services: {provider.services?.join(", ") || "N/A"}
             </p>
-            <button
-              onClick={handleContact}
-              className="bg-aqua-teal text-white px-6 py-2 rounded-md font-semibold hover:bg-opacity-90 transition duration-300"
-            >
-              Contact Provider
-            </button>
+            {user && (
+              <form onSubmit={handleContact} className="contact-form">
+                <textarea
+                  className="w-full p-2 border rounded-md mb-2"
+                  placeholder="Type your message..."
+                  value={messageContent}
+                  onChange={(e) => setMessageContent(e.target.value)}
+                />
+                <button
+                  type="submit"
+                  className="bg-aqua-teal text-white px-6 py-2 rounded-md font-semibold hover:bg-opacity-90 transition duration-300"
+                >
+                  Contact Provider
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </div>

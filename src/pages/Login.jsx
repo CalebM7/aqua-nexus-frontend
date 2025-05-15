@@ -1,10 +1,10 @@
-import React, { useState, useContext } from 'react';
+import { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { setIsAuthenticated } = useContext(AuthContext);
+  const { setUser, setIsAuthenticated } = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -24,21 +24,13 @@ const Login = () => {
         const data = await response.json();
         throw new Error(data.error || 'Login failed');
       }
-      const data = await response.json();
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
+      const { accessToken, refreshToken, user } = await response.json();
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('user', JSON.stringify(user));
+      setUser(user);
       setIsAuthenticated(true);
-      // Fetch user role
-      const userResponse = await fetch('http://localhost:5000/auth/me', {
-        headers: { 'Authorization': `Bearer ${data.accessToken}` },
-      });
-      if (!userResponse.ok) throw new Error('Failed to fetch user role');
-      const userData = await userResponse.json();
-      if (userData.role === 'provider') {
-        navigate('/dashboard');
-      } else {
-        navigate('/');
-      }
+      navigate(user.role === 'provider' ? '/dashboard' : '/');
     } catch (err) {
       setError(err.message || 'An unexpected error occurred');
     } finally {

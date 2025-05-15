@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import AuthProvider from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext'; // Fixed: Named import
 import { AuthContext } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
 import Landing from './pages/Landing';
@@ -12,7 +12,7 @@ import Dashboard from './pages/Dashboard';
 import './index.css';
 
 function AppContent() {
-  const { isAuthenticated } = useContext(AuthContext); // Moved inside AuthProvider scope
+  const { isAuthenticated } = useContext(AuthContext);
   return (
     <div>
       <Navbar />

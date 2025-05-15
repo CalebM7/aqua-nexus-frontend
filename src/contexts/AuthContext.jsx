@@ -1,47 +1,78 @@
-import { createContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { createContext, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export const AuthContext = createContext();
 
-export default function AuthProvider({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('accessToken'));
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
 
   const refreshToken = async () => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) throw new Error('No refresh token');
-      const response = await fetch('http://localhost:5000/auth/refresh', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
+      const response = await fetch("http://localhost:5000/auth/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken: localStorage.getItem("refreshToken") }),
       });
-      if (!response.ok) throw new Error('Failed to refresh token');
-      const data = await response.json();
-      localStorage.setItem('accessToken', data.accessToken);
+      if (!response.ok) throw new Error("Failed to refresh token");
+      const { accessToken } = await response.json();
+      localStorage.setItem("accessToken", accessToken);
+      // Fetch user data after refresh
+      const userResponse = await fetch("http://localhost:5000/auth/me", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!userResponse.ok) throw new Error("Failed to fetch user data");
+      const userData = await userResponse.json();
+      const providerResponse = await fetch(`http://localhost:5000/provider/${userData.id}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const providerId = providerResponse.ok ? (await providerResponse.json()).id : null;
+      setUser({ userId: userData.id, role: userData.role, providerId });
       setIsAuthenticated(true);
-      return data.accessToken;
+      return accessToken;
     } catch (err) {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      console.error("Refresh token error:", err);
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+      setUser(null);
       setIsAuthenticated(false);
-      navigate('/login');
+      navigate("/login");
       return null;
     }
   };
 
   useEffect(() => {
-    const initAuth = async () => {
-      if (localStorage.getItem('refreshToken')) {
-        await refreshToken();
+    const validateToken = async () => {
+      const token = localStorage.getItem("accessToken");
+      const storedUser = localStorage.getItem("user");
+      if (token && storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          setUser({
+            userId: userData.userId,
+            role: userData.role,
+            providerId: userData.providerId,
+          });
+          setIsAuthenticated(true);
+        } catch (err) {
+          console.error("Validate token error:", err);
+          const newToken = await refreshToken();
+          if (!newToken) {
+            setUser(null);
+            setIsAuthenticated(false);
+            navigate("/login");
+          }
+        }
       }
     };
-    initAuth();
-  }, []);
+    validateToken();
+  }, [navigate]);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated, refreshToken }}>
+    <AuthContext.Provider value={{ user, setUser, isAuthenticated, setIsAuthenticated, refreshToken }}>
       {children}
     </AuthContext.Provider>
   );
-}
+};
