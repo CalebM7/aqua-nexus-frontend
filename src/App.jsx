@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "./contexts/AuthContext";
 import Landing from "./pages/Landing";
@@ -11,6 +11,9 @@ import ProviderDashboard from "./pages/ProviderDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import ForgotPassword from "./pages/ForgotPassword";
+import AboutUs from "./pages/AboutUs";
+import FAQ from "./pages/FAQ";
+import HowItWorksPage from "./pages/HowItWorksPage";
 
 function App() {
   const { loading } = useContext(AuthContext);
@@ -73,7 +76,7 @@ function App() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute requiresAuth={true}>
+            <ProtectedRoute requiresAuth={true} allowedRoles={["user"]}>
               <UserDashboard />
             </ProtectedRoute>
           }
@@ -81,11 +84,14 @@ function App() {
         <Route
           path="/provider-dashboard"
           element={
-            <ProtectedRoute requiresAuth={true}>
+            <ProtectedRoute requiresAuth={true} allowedRoles={["provider"]}>
               <ProviderDashboard />
             </ProtectedRoute>
           }
         />
+        <Route path="/about-us" element={<AboutUs />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route
           path="*"
           element={

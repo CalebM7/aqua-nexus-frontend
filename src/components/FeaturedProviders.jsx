@@ -11,25 +11,8 @@ export default function FeaturedProviders() {
   useEffect(() => {
     const fetchFeaturedProviders = async () => {
       try {
-        let token = localStorage.getItem("accessToken");
-        if (!token) {
-          navigate("/login");
-          return;
-        }
-        let response = await fetch("http://localhost:5000/providers", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (response.status === 401 || response.status === 403) {
-          token = await refreshToken();
-          if (!token) return;
-          response = await fetch("http://localhost:5000/providers", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-        }
+        // No auth required for public providers list
+        const response = await fetch("http://localhost:5000/providers");
         if (!response.ok) throw new Error("Failed to fetch providers");
         const data = await response.json();
         const featured = data
@@ -41,7 +24,7 @@ export default function FeaturedProviders() {
       }
     };
     fetchFeaturedProviders();
-  }, [navigate, refreshToken]);
+  }, []);
 
   if (error) return <div className="text-red-500 text-center">{error}</div>;
 
@@ -58,7 +41,15 @@ export default function FeaturedProviders() {
               className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition duration-300"
             >
               <img
-                src={`http://localhost:5000${provider.image}`}
+                src={
+                  provider.image
+                    ? `http://localhost:5000${
+                        provider.image.startsWith("/")
+                          ? provider.image
+                          : "/uploads/" + provider.image
+                      }`
+                    : "https://placehold.co/256x192?text=No+Image"
+                }
                 alt={provider.name}
                 className="w-64 h-48 object-cover rounded-lg"
               />

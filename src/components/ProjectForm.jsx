@@ -3,7 +3,7 @@ import { useContext } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 
 const ProjectForm = ({ onProjectPosted }) => {
-  const { accessToken } = useContext(AuthContext);
+  const { user, accessToken } = useContext(AuthContext);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -35,7 +35,20 @@ const ProjectForm = ({ onProjectPosted }) => {
     setError('');
     setLoading(true);
 
+    if (!user) {
+      setError('You must be logged in to post a project');
+      setLoading(false);
+      return;
+    }
+
+    if (!accessToken) {
+      setError('No access token found. Please log in again.');
+      setLoading(false);
+      return;
+    }
+
     try {
+      console.log('ProjectForm: Sending POST with token:', accessToken.slice(0, 10) + '...');
       const response = await fetch('http://localhost:5000/projects', {
         method: 'POST',
         headers: {
@@ -44,10 +57,10 @@ const ProjectForm = ({ onProjectPosted }) => {
         },
         body: JSON.stringify({
           ...formData,
-          budget: parseFloat(formData.budget),
+          budget: parseFloat(formData.budget) || null,
           location: {
-            lat: parseFloat(formData.location.lat),
-            long: parseFloat(formData.location.long),
+            lat: parseFloat(formData.location.lat) || null,
+            long: parseFloat(formData.location.long) || null,
           },
         }),
       });
@@ -58,6 +71,7 @@ const ProjectForm = ({ onProjectPosted }) => {
       }
 
       const data = await response.json();
+      console.log('ProjectForm: Project posted:', data);
       onProjectPosted(data);
       setFormData({
         title: '',
@@ -67,7 +81,9 @@ const ProjectForm = ({ onProjectPosted }) => {
         location: { lat: '', long: '' },
         permit_required: false,
       });
+      alert('Project posted successfully!');
     } catch (err) {
+      console.error('ProjectForm: Error:', err.message);
       setError(err.message);
     } finally {
       setLoading(false);

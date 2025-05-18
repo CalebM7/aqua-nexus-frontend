@@ -108,13 +108,30 @@ body {
 .password-input i {
   position: absolute;
   top: 50%;
-  left: 12px;
+  left: 0.9rem; /* Slightly more space from the left edge */
   transform: translateY(-50%);
   color: #6b7280; /* Tailwind gray-500 */
   font-size: 1rem;
+  z-index: 2;
 }
 .password-input input {
-  padding-left: 2.5rem; /* Space for icon */
+  padding-left: 2.75rem; /* Match right padding for even spacing */
+  padding-right: 2.75rem;
+}
+.password-input .password-eye-btn {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0.75rem;
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  color: #6b7280;
+  z-index: 3;
+  cursor: pointer;
+  height: 100%;
+  padding: 0;
 }
 
 /* Dashboard styles */
