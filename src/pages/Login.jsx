@@ -4,7 +4,7 @@ import { AuthContext } from '../contexts/AuthContext';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { setUser, setIsAuthenticated } = useContext(AuthContext);
+  const { login } = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -12,29 +12,26 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('Login: handleSubmit called', { email, password: password ? '[hidden]' : '' });
     setIsLoading(true);
     setError('');
     try {
-      const response = await fetch('http://localhost:5000/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+      console.log('Login: Calling login function', { email });
+      const loggedInUser = await login(email, password);
+      console.log('Login: Success', {
+        userId: loggedInUser.userId,
+        email: loggedInUser.email,
+        role: loggedInUser.role,
+        providerId: loggedInUser.providerId,
       });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Login failed');
-      }
-      const { accessToken, refreshToken, user } = await response.json();
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify(user));
-      setUser(user);
-      setIsAuthenticated(true);
-      navigate(user.role === 'provider' ? '/dashboard' : '/');
+      navigate(loggedInUser.role === 'provider' ? '/dashboard' : '/', { replace: true });
     } catch (err) {
-      setError(err.message || 'An unexpected error occurred');
+      const errorMessage = err.message || 'An unexpected error occurred';
+      console.error('Login error in component:', { message: errorMessage, stack: err.stack });
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
+      console.log('Login: handleSubmit completed', { isLoading: false, error });
     }
   };
 
@@ -57,11 +54,17 @@ const Login = () => {
       <div className="lg:w-1/2 xl:w-2/5 w-full bg-white p-6 md:p-12 flex items-center justify-center order-1 lg:order-2">
         <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-xl border border-gray-200">
           <h2 className="text-2xl font-semibold text-center text-aqua-blue mb-6">Login to AquaNexus</h2>
-          {error && <p className="text-red-500 text-sm text-center mb-4">{error}</p>}
-          <form onSubmit={handleSubmit}>
+          {error && (
+            <p className="text-red-500 text-sm text-center mb-4" aria-live="assertive">
+              {error}
+            </p>
+          )}
+          <form onSubmit={handleSubmit} noValidate>
             <div className="space-y-4">
               <div className="input-with-icon">
-                <label htmlFor="email" className="sr-only">Email address</label>
+                <label htmlFor="email" className="sr-only">
+                  Email address
+                </label>
                 <i className="fas fa-envelope"></i>
                 <input
                   type="email"
@@ -70,13 +73,17 @@ const Login = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-aqua-blue focus:border-transparent sm:text-sm"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-aqua-blue focus:border-transparent sm:text-sm disabled:bg-gray-100"
                   placeholder="Email address"
                   disabled={isLoading}
+                  aria-invalid={error ? 'true' : 'false'}
+                  aria-describedby={error ? 'email-error' : undefined}
                 />
               </div>
               <div className="input-with-icon password-input">
-                <label htmlFor="password" className="sr-only">Password</label>
+                <label htmlFor="password" className="sr-only">
+                  Password
+                </label>
                 <i className="fas fa-lock"></i>
                 <input
                   type="password"
@@ -85,13 +92,21 @@ const Login = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-aqua-blue focus:border-transparent sm:text-sm"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-aqua-blue focus:border-transparent sm:text-sm disabled:bg-gray-100"
                   placeholder="Password"
                   disabled={isLoading}
+                  aria-invalid={error ? 'true' : 'false'}
+                  aria-describedby={error ? 'password-error' : undefined}
                 />
               </div>
               <div className="text-right text-sm">
-                <Link to="#" className="font-medium text-aqua-blue hover:text-aqua-teal">Forgot password?</Link>
+                <Link
+                  to="/forgot-password"
+                  className="font-medium text-aqua-blue hover:text-aqua-teal"
+                  aria-label="Forgot your password?"
+                >
+                  Forgot password?
+                </Link>
               </div>
             </div>
             <div className="mt-6">
@@ -99,14 +114,48 @@ const Login = () => {
                 type="submit"
                 className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-aqua-blue hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aqua-blue transition duration-150 ease-in-out disabled:opacity-50"
                 disabled={isLoading}
+                aria-busy={isLoading ? 'true' : 'false'}
               >
-                {isLoading ? 'Logging in...' : 'Login'}
+                {isLoading ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Logging in...
+                  </>
+                ) : (
+                  'Login'
+                )}
               </button>
             </div>
           </form>
           <div className="mt-6 text-center text-sm">
             <p className="text-gray-600">
-              Don't have an account? <Link to="/signup" className="font-medium text-aqua-blue hover:text-aqua-teal">Sign up</Link>
+              Don't have an account?{' '}
+              <Link
+                to="/signup"
+                className="font-medium text-aqua-blue hover:text-aqua-teal"
+                aria-label="Sign up for a new account"
+              >
+                Sign up
+              </Link>
             </p>
           </div>
         </div>
