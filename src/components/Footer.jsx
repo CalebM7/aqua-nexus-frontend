@@ -1,12 +1,12 @@
+import { Link } from "react-router-dom";
+
 export default function Footer() {
   return (
     <footer className="bg-gray-800 text-gray-300 py-12">
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div>
-            <h4 className="text-lg font-semibold mb-4 text-white">
-              AquaNexus
-            </h4>
+            <h4 className="text-lg font-semibold mb-4 text-white">AquaNexus</h4>
             <p className="text-sm">
               Connecting Kenya to sustainable water solutions.
             </p>
@@ -17,19 +17,19 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="#" className="hover:text-teal-500">
+                <Link to="/about-us" className="hover:text-teal-500">
                   About Us
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-teal-500">
+                <Link to="/how-it-works" className="hover:text-teal-500">
                   How It Works
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-teal-500">
+                <Link to="/faq" className="hover:text-teal-500">
                   FAQ
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -44,9 +44,7 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="text-lg font-semibold mb-4 text-white">
-              Follow Us
-            </h4>
+            <h4 className="text-lg font-semibold mb-4 text-white">Follow Us</h4>
             <div className="flex space-x-4">
               <a href="#" className="hover:text-teal-500">
                 <i className="fab fa-facebook-f fa-lg"></i>
@@ -65,5 +63,5 @@ export default function Footer() {
         </div>
       </div>
     </footer>
-  )
+  );
 }

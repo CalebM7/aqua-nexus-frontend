@@ -1,5 +1,20 @@
-// src/components/Hero.jsx
+import { useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../contexts/AuthContext';
+
 export default function Hero() {
+  const { isAuthenticated, user } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const handlePostProject = () => {
+    console.log('Hero: Post a Project clicked', { isAuthenticated, user });
+    if (isAuthenticated && user?.role === 'user') {
+      navigate('/dashboard');
+    } else {
+      navigate('/login', { state: { from: '/dashboard' } });
+    }
+  };
+
   return (
     <section className="relative bg-aqua-blue text-white py-20 md:py-32 overflow-hidden">
       <div
@@ -23,18 +38,18 @@ export default function Hero() {
           Post your project, compare bids, and hire certified providers for rainwater harvesting and borehole drilling.
         </p>
         <div className="space-x-4">
-          <a
-            href="#"
+          <button
+            onClick={handlePostProject}
             className="bg-aqua-green text-white px-8 py-3 rounded-md text-lg font-semibold hover:bg-opacity-90 transition duration-300 shadow-lg"
           >
             Post a Project
-          </a>
-          <a
-            href="#providers"
+          </button>
+          <Link
+            to="/providers"
             className="bg-white text-aqua-blue px-8 py-3 rounded-md text-lg font-semibold hover:bg-gray-100 transition duration-300 shadow-lg"
           >
             Browse Providers
-          </a>
+          </Link>
         </div>
       </div>
     </section>

@@ -9,12 +9,14 @@ export default function Testimonials() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="bg-white p-8 rounded-lg shadow-md border border-gray-200">
             <p className="text-gray-600 italic mb-4">
-              "Finding a reliable borehole driller was stressful until I found AquaNexus. The process was smooth, and I got quotes quickly. Highly recommend!"
+              "Finding a reliable borehole driller was stressful until I found
+              AquaNexus. The process was smooth, and I got quotes quickly.
+              Highly recommend!"
             </p>
             <div className="flex items-center">
               <img
-                src="https://placehold.co/60x60/cccccc/ffffff?text=User1"
-                alt="User 1"
+                src="https://ui-avatars.com/api/?name=Jane+Wanjiru&background=00a3a3&color=fff&size=60"
+                alt="Jane Wanjiru"
                 className="w-12 h-12 rounded-full mr-4 border-2 border-aqua-teal"
               />
               <div>
@@ -25,17 +27,21 @@ export default function Testimonials() {
           </div>
           <div className="bg-white p-8 rounded-lg shadow-md border border-gray-200">
             <p className="text-gray-600 italic mb-4">
-              "AquaNexus connected us with an excellent team for our community rainwater harvesting project. The platform made comparing providers easy."
+              "AquaNexus connected us with an excellent team for our community
+              rainwater harvesting project. The platform made comparing
+              providers easy."
             </p>
             <div className="flex items-center">
               <img
-                src="https://placehold.co/60x60/cccccc/ffffff?text=User2"
-                alt="User 2"
+                src="https://ui-avatars.com/api/?name=David+Otieno&background=00a3a3&color=fff&size=60"
+                alt="David Otieno"
                 className="w-12 h-12 rounded-full mr-4 border-2 border-aqua-teal"
               />
               <div>
                 <p className="font-semibold text-gray-800">David Otieno</p>
-                <p className="text-sm text-gray-500">Community Leader, Kisumu</p>
+                <p className="text-sm text-gray-500">
+                  Community Leader, Kisumu
+                </p>
               </div>
             </div>
           </div>

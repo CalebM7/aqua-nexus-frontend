@@ -1,37 +1,56 @@
-import { useState, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { AuthContext } from '../contexts/AuthContext';
+import { useState, useContext, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { AuthContext } from "../contexts/AuthContext";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useContext(AuthContext);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const { login, isAuthenticated, user } = useContext(AuthContext);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    console.log("Login: useEffect checking auth", { isAuthenticated, user });
+    if (isAuthenticated && user) {
+      const destination =
+        user.role === "provider" ? "/provider-dashboard" : "/dashboard";
+      console.log("Login: Already authenticated, redirecting to", destination);
+      navigate(destination, { replace: true });
+    }
+  }, [isAuthenticated, user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Login: handleSubmit called', { email, password: password ? '[hidden]' : '' });
+    console.log("Login: handleSubmit called", {
+      email,
+      password: password ? "[hidden]" : "",
+    });
     setIsLoading(true);
-    setError('');
+    setError("");
     try {
-      console.log('Login: Calling login function', { email });
+      console.log("Login: Calling login function", { email });
       const loggedInUser = await login(email, password);
-      console.log('Login: Success', {
+      console.log("Login: Success", {
         userId: loggedInUser.userId,
         email: loggedInUser.email,
         role: loggedInUser.role,
         providerId: loggedInUser.providerId,
       });
-      navigate(loggedInUser.role === 'provider' ? '/dashboard' : '/', { replace: true });
+      const destination =
+        loggedInUser.role === "provider" ? "/provider-dashboard" : "/dashboard";
+      navigate(destination, { replace: true });
     } catch (err) {
-      const errorMessage = err.message || 'An unexpected error occurred';
-      console.error('Login error in component:', { message: errorMessage, stack: err.stack });
+      const errorMessage = err.message || "An unexpected error occurred";
+      console.error("Login error in component:", {
+        message: errorMessage,
+        stack: err.stack,
+      });
       setError(errorMessage);
     } finally {
       setIsLoading(false);
-      console.log('Login: handleSubmit completed', { isLoading: false, error });
+      console.log("Login: handleSubmit completed", { isLoading: false, error });
     }
   };
 
@@ -47,15 +66,21 @@ const Login = () => {
             Connecting Kenya to Trusted Water Solutions.
           </h1>
           <p className="text-lg text-blue-100">
-            Find certified providers for rainwater harvesting and borehole drilling, or offer your services to those in need.
+            Find certified providers for rainwater harvesting and borehole
+            drilling, or offer your services to those in need.
           </p>
         </div>
       </div>
       <div className="lg:w-1/2 xl:w-2/5 w-full bg-white p-6 md:p-12 flex items-center justify-center order-1 lg:order-2">
         <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-xl border border-gray-200">
-          <h2 className="text-2xl font-semibold text-center text-aqua-blue mb-6">Login to AquaNexus</h2>
+          <h2 className="text-2xl font-semibold text-center text-aqua-blue mb-6">
+            Login to AquaNexus
+          </h2>
           {error && (
-            <p className="text-red-500 text-sm text-center mb-4" aria-live="assertive">
+            <p
+              className="text-red-500 text-sm text-center mb-4"
+              aria-live="assertive"
+            >
               {error}
             </p>
           )}
@@ -76,8 +101,8 @@ const Login = () => {
                   className="w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-aqua-blue focus:border-transparent sm:text-sm disabled:bg-gray-100"
                   placeholder="Email address"
                   disabled={isLoading}
-                  aria-invalid={error ? 'true' : 'false'}
-                  aria-describedby={error ? 'email-error' : undefined}
+                  aria-invalid={error ? "true" : "false"}
+                  aria-describedby={error ? "email-error" : undefined}
                 />
               </div>
               <div className="input-with-icon password-input">
@@ -86,7 +111,7 @@ const Login = () => {
                 </label>
                 <i className="fas fa-lock"></i>
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   id="password"
                   required
@@ -95,9 +120,20 @@ const Login = () => {
                   className="w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-aqua-blue focus:border-transparent sm:text-sm disabled:bg-gray-100"
                   placeholder="Password"
                   disabled={isLoading}
-                  aria-invalid={error ? 'true' : 'false'}
-                  aria-describedby={error ? 'password-error' : undefined}
+                  aria-invalid={error ? "true" : "false"}
+                  aria-describedby={error ? "password-error" : undefined}
                 />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className="password-eye-btn"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  <i
+                    className={showPassword ? "fas fa-eye-slash" : "fas fa-eye"}
+                  ></i>
+                </button>
               </div>
               <div className="text-right text-sm">
                 <Link
@@ -114,7 +150,7 @@ const Login = () => {
                 type="submit"
                 className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-aqua-blue hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aqua-blue transition duration-150 ease-in-out disabled:opacity-50"
                 disabled={isLoading}
-                aria-busy={isLoading ? 'true' : 'false'}
+                aria-busy={isLoading ? "true" : "false"}
               >
                 {isLoading ? (
                   <>
@@ -141,14 +177,14 @@ const Login = () => {
                     Logging in...
                   </>
                 ) : (
-                  'Login'
+                  "Login"
                 )}
               </button>
             </div>
           </form>
           <div className="mt-6 text-center text-sm">
             <p className="text-gray-600">
-              Don't have an account?{' '}
+              Don't have an account?{" "}
               <Link
                 to="/signup"
                 className="font-medium text-aqua-blue hover:text-aqua-teal"
