@@ -3,8 +3,7 @@ import { useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 
 export default function Navbar() {
-  const { isAuthenticated, user, setUser, setIsAuthenticated } =
-    useContext(AuthContext);
+  const { isAuthenticated, user, setUser, setIsAuthenticated } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -26,7 +25,7 @@ export default function Navbar() {
     localStorage.removeItem("user");
     setUser(null);
     setIsAuthenticated(false);
-    navigate("/"); // <-- Always go to landing page after logout
+    navigate("/"); // Go to landing page after logout
   };
 
   return (
@@ -54,23 +53,29 @@ export default function Navbar() {
           >
             Testimonials
           </a>
+          {isAuthenticated && user?.role === "user" && (
+            <Link
+              to="/dashboard"
+              className="text-gray-600 hover:text-blue-600 px-3 py-2"
+            >
+              Dashboard
+            </Link>
+          )}
+          {isAuthenticated && user?.role === "provider" && (
+            <Link
+              to="/provider-dashboard"
+              className="text-gray-600 hover:text-blue-600 px-3 py-2"
+            >
+              Provider Dashboard
+            </Link>
+          )}
           {isAuthenticated ? (
-            <>
-              {user?.role === "provider" && (
-                <Link
-                  to="/dashboard"
-                  className="text-gray-600 hover:text-blue-600 px-3 py-2"
-                >
-                  Dashboard
-                </Link>
-              )}
-              <button
-                onClick={handleLogout}
-                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
-              >
-                Logout
-              </button>
-            </>
+            <button
+              onClick={handleLogout}
+              className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+            >
+              Logout
+            </button>
           ) : (
             <>
               <Link

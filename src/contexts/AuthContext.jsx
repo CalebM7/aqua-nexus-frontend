@@ -6,6 +6,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isRedirecting, setIsRedirecting] = useState(false); // Prevent loop
 
   const logout = useCallback(() => {
     console.log("AuthContext: Logging out user");
@@ -15,14 +16,15 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setIsAuthenticated(false);
     setLoading(false);
-    window.location.href = "/";
-  }, []);
+    if (!isRedirecting) {
+      setIsRedirecting(true);
+      window.location.href = "/";
+    }
+  }, [isRedirecting]);
 
   const attemptRefreshToken = useCallback(
     async (caller = "unknown") => {
-      console.log(
-        `AuthContext: Attempting token refresh, called by: ${caller}`
-      );
+      console.log(`AuthContext: Attempting token refresh, called by: ${caller}`);
       const refreshTokenValue = localStorage.getItem("refreshToken");
       if (!refreshTokenValue) {
         console.log("Refresh attempt: No refresh token found.");
@@ -123,7 +125,8 @@ export const AuthProvider = ({ children }) => {
         console.error("Validate token error:", err.message);
         if (
           !err.message.includes("Failed to refresh token") &&
-          !err.message.includes("No refresh token found")
+          !err.message.includes("No refresh token found") &&
+          !isRedirecting
         ) {
           logout();
         }
@@ -138,7 +141,7 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(false);
       setLoading(false);
     }
-  }, [attemptRefreshToken, logout]);
+  }, [attemptRefreshToken, logout, isRedirecting]);
 
   const login = useCallback(async (email, password) => {
     console.log("AuthContext: login function called.", { email });

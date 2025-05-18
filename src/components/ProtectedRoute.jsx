@@ -3,7 +3,7 @@ import { AuthContext } from "../contexts/AuthContext";
 import { Navigate, useLocation } from "react-router-dom";
 
 export default function ProtectedRoute({ requiresAuth, children }) {
-  const { isAuthenticated, loading } = useContext(AuthContext);
+  const { isAuthenticated, loading, user } = useContext(AuthContext);
   const location = useLocation();
 
   if (loading) {
@@ -22,6 +22,12 @@ export default function ProtectedRoute({ requiresAuth, children }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If requiresAuth is false, always render children (login/signup/landing)
+  if (!requiresAuth && isAuthenticated) {
+    // Authenticated users shouldn't access login/signup
+    const redirectTo = user?.role === "provider" ? "/provider-dashboard" : "/dashboard";
+    return <Navigate to={redirectTo} state={{ from: location }} replace />;
+  }
+
+  // Render children for valid cases
   return children;
 }
