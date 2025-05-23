@@ -114,26 +114,28 @@ export default function ProviderProfile() {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="md:col-span-1">
-            <img
-              src={
-                provider.image
-                  ? `http://localhost:5000${
-                      provider.image.startsWith("/")
-                        ? provider.image
-                        : "/uploads/" + provider.image
-                    }`
-                  : "https://placehold.co/256x192?text=No+Image"
-              }
-              alt={provider.name}
-              className="w-64 h-48 object-cover rounded-lg"
-              onError={(e) => {
-                e.target.src = "https://placehold.co/256x192?text=No+Image";
-                console.log(
-                  "ProviderProfile: Image load error for",
-                  provider.name
-                );
-              }}
-            />
+            <div className="w-full overflow-hidden rounded-lg">
+              <img
+                src={
+                  provider.image
+                    ? `http://localhost:5000${
+                        provider.image.startsWith("/")
+                          ? provider.image
+                          : "/uploads/" + provider.image
+                      }`
+                    : "https://placehold.co/256x192?text=No+Image"
+                }
+                alt={provider.name}
+                className="w-full aspect-[4/3] object-cover"
+                onError={(e) => {
+                  e.target.src = "https://placehold.co/256x192?text=No+Image";
+                  console.log(
+                    "ProviderProfile: Image load error for",
+                    provider.name
+                  );
+                }}
+              />
+            </div>
           </div>
           <div className="md:col-span-2">
             <div className="flex items-center mb-4 star-rating">

@@ -40,19 +40,21 @@ export default function FeaturedProviders() {
               key={provider.id}
               className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition duration-300"
             >
-              <img
-                src={
-                  provider.image
-                    ? `http://localhost:5000${
-                        provider.image.startsWith("/")
-                          ? provider.image
-                          : "/uploads/" + provider.image
-                      }`
-                    : "https://placehold.co/256x192?text=No+Image"
-                }
-                alt={provider.name}
-                className="w-64 h-48 object-cover rounded-lg"
-              />
+              <div className="w-full overflow-hidden rounded-lg">
+                <img
+                  src={
+                    provider.image
+                      ? `http://localhost:5000${
+                          provider.image.startsWith("/")
+                            ? provider.image
+                            : "/uploads/" + provider.image
+                        }`
+                      : "https://placehold.co/256x192?text=No+Image"
+                  }
+                  alt={provider.name}
+                  className="w-full aspect-[4/3] object-cover"
+                />
+              </div>
               <div className="p-6">
                 <h3 className="text-xl font-semibold mb-2 text-gray-800">
                   {provider.name}

@@ -105,7 +105,10 @@ const Login = () => {
                   aria-describedby={error ? "email-error" : undefined}
                 />
               </div>
-              <div className="input-with-icon password-input">
+              <div
+                className="input-with-icon password-input"
+                style={{ position: "relative" }}
+              >
                 <label htmlFor="password" className="sr-only">
                   Password
                 </label>
@@ -117,11 +120,12 @@ const Login = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-aqua-blue focus:border-transparent sm:text-sm disabled:bg-gray-100"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-aqua-blue focus:border-transparent sm:text-sm disabled:bg-gray-100 pr-10"
                   placeholder="Password"
                   disabled={isLoading}
                   aria-invalid={error ? "true" : "false"}
                   aria-describedby={error ? "password-error" : undefined}
+                  style={{ paddingRight: "2.5rem" }}
                 />
                 <button
                   type="button"
@@ -129,6 +133,19 @@ const Login = () => {
                   className="password-eye-btn"
                   onClick={() => setShowPassword((v) => !v)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
+                  style={{
+                    position: "absolute",
+                    right: "0.75rem",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    color: "#6b7280",
+                    zIndex: 3,
+                    cursor: "pointer",
+                    padding: 0,
+                    height: "100%",
+                  }}
                 >
                   <i
                     className={showPassword ? "fas fa-eye-slash" : "fas fa-eye"}

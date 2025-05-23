@@ -65,10 +65,11 @@ const Signup = () => {
         throw new Error(data.error || "Signup failed");
       }
       const data = await response.json();
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
-      setIsAuthenticated(true);
-      navigate("/");
+      // Remove auto-login and redirect to login page instead
+      // localStorage.setItem("accessToken", data.accessToken);
+      // localStorage.setItem("refreshToken", data.refreshToken);
+      // setIsAuthenticated(true);
+      navigate("/login"); // Redirect to login page after signup
     } catch (err) {
       setError(err.message || "An unexpected error occurred");
     } finally {
@@ -187,7 +188,7 @@ const Signup = () => {
                   disabled={isLoading}
                 />
               </div>
-              <div className="input-with-icon password-input">
+              <div className="input-with-icon password-input" style={{ position: "relative" }}>
                 <label htmlFor="password" className="sr-only">
                   Password
                 </label>
@@ -199,9 +200,10 @@ const Signup = () => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-aqua-blue focus:border-transparent sm:text-sm"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-aqua-blue focus:border-transparent sm:text-sm pr-10"
                   placeholder="Password"
                   disabled={isLoading}
+                  style={{ paddingRight: "2.5rem" }}
                 />
                 <button
                   type="button"
@@ -209,13 +211,26 @@ const Signup = () => {
                   className="password-eye-btn"
                   onClick={() => setShowPassword((v) => !v)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
+                  style={{
+                    position: "absolute",
+                    right: "0.75rem",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    color: "#6b7280",
+                    zIndex: 3,
+                    cursor: "pointer",
+                    padding: 0,
+                    height: "100%",
+                  }}
                 >
                   <i
                     className={showPassword ? "fas fa-eye-slash" : "fas fa-eye"}
                   ></i>
                 </button>
               </div>
-              <div className="input-with-icon password-input">
+              <div className="input-with-icon password-input" style={{ position: "relative" }}>
                 <label htmlFor="confirm-password" className="sr-only">
                   Confirm Password
                 </label>
@@ -227,9 +242,10 @@ const Signup = () => {
                   required
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-aqua-blue focus:border-transparent sm:text-sm"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-aqua-blue focus:border-transparent sm:text-sm pr-10"
                   placeholder="Confirm Password"
                   disabled={isLoading}
+                  style={{ paddingRight: "2.5rem" }}
                 />
                 <button
                   type="button"
@@ -239,6 +255,19 @@ const Signup = () => {
                   aria-label={
                     showConfirmPassword ? "Hide password" : "Show password"
                   }
+                  style={{
+                    position: "absolute",
+                    right: "0.75rem",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    color: "#6b7280",
+                    zIndex: 3,
+                    cursor: "pointer",
+                    padding: 0,
+                    height: "100%",
+                  }}
                 >
                   <i
                     className={
