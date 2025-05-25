@@ -1,7 +1,10 @@
-import { useState, useEffect, useContext } from "react";
-import { AuthContext } from "../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import "../index.css";
+import { useState, useEffect, useContext } from 'react';
+import { AuthContext } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import '../index.css';
+import BidForm from '../components/BidForm';
+import NotificationList from '../components/NotificationList';
+import BidList from '../components/BidList';
 
 export default function ProviderDashboard() {
   const { user, isAuthenticated, loading } = useContext(AuthContext);
@@ -13,56 +16,57 @@ export default function ProviderDashboard() {
   const [replyContent, setReplyContent] = useState({});
   const [bidData, setBidData] = useState({});
   const [profileForm, setProfileForm] = useState({
-    description: "",
-    service_type: "rwh",
-    price_range_min: "",
-    price_range_max: "",
-    service_areas: "",
-    services: "",
+    description: '',
+    service_type: 'rwh',
+    price_range_min: '',
+    price_range_max: '',
+    service_areas: '',
+    services: '',
   });
   const [image, setImage] = useState(null);
-  const [profileMessage, setProfileMessage] = useState("");
+  const [profileMessage, setProfileMessage] = useState('');
+  const [myBids, setMyBids] = useState([]);
 
   useEffect(() => {
-    console.log("ProviderDashboard: useEffect running", {
+    console.log('ProviderDashboard: useEffect running', {
       user,
       isAuthenticated,
       loading,
       localStorage: {
-        accessToken: !!localStorage.getItem("accessToken"),
-        refreshToken: !!localStorage.getItem("refreshToken"),
-        user: !!localStorage.getItem("user"),
+        accessToken: !!localStorage.getItem('accessToken'),
+        refreshToken: !!localStorage.getItem('refreshToken'),
+        user: !!localStorage.getItem('user'),
       },
     });
 
     if (loading) {
-      console.log("ProviderDashboard: Loading state, waiting...");
+      console.log('ProviderDashboard: Loading state, waiting...');
       return;
     }
 
     if (!isAuthenticated || !user) {
       console.log(
-        "ProviderDashboard: Not authenticated or no user, redirecting to /login"
+        'ProviderDashboard: Not authenticated or no user, redirecting to /login'
       );
-      navigate("/login", { replace: true });
+      navigate('/login', { replace: true });
       return;
     }
 
-    if (user.role !== "provider") {
-      console.log("ProviderDashboard: Non-provider user, redirecting to /", {
+    if (user.role !== 'provider') {
+      console.log('ProviderDashboard: Non-provider user, redirecting to /', {
         role: user.role,
       });
-      navigate("/", { replace: true });
+      navigate('/', { replace: true });
       return;
     }
 
     if (!user.providerId) {
-      console.error("ProviderDashboard: No providerId for provider user", {
+      console.error('ProviderDashboard: No providerId for provider user', {
         userId: user.userId,
         email: user.email,
       });
       setError(
-        "Provider profile not found. Please contact support or complete your provider setup."
+        'Provider profile not found. Please contact support or complete your provider setup.'
       );
       setFetchLoading(false);
       return;
@@ -71,33 +75,28 @@ export default function ProviderDashboard() {
     const fetchData = async () => {
       setFetchLoading(true);
       try {
-        const token = localStorage.getItem("accessToken");
+        const token = localStorage.getItem('accessToken');
         console.log(
-          "ProviderDashboard: Fetching data with token:",
-          token?.slice(0, 10) + "..."
+          'ProviderDashboard: Fetching data with token:',
+          token?.slice(0, 10) + '...'
         );
-        const [messagesRes, projectsRes, providerRes] = await Promise.all([
-          fetch("http://localhost:5000/messages/provider", {
-            headers: { Authorization: `Bearer ${token}` },
-          }).catch((err) => {
-            console.error("ProviderDashboard: Messages fetch error:", err);
-            throw new Error("Failed to fetch messages");
-          }),
-          fetch("http://localhost:5000/projects", {
-            headers: { Authorization: `Bearer ${token}` },
-          }).catch((err) => {
-            console.error("ProviderDashboard: Projects fetch error:", err);
-            throw new Error("Failed to fetch projects");
-          }),
-          fetch(`http://localhost:5000/providers/${user.providerId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).catch((err) => {
-            console.error("ProviderDashboard: Provider fetch error:", err);
-            throw new Error("Failed to fetch provider data");
-          }),
-        ]);
+        const [messagesRes, projectsRes, providerRes, bidsRes] =
+          await Promise.all([
+            fetch('http://localhost:5000/messages/provider', {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+            fetch('http://localhost:5000/projects', {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+            fetch(`http://localhost:5000/providers/${user.providerId}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+            fetch('http://localhost:5000/bids/me', {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+          ]);
 
-        console.log("ProviderDashboard: API responses", {
+        console.log('ProviderDashboard: API responses', {
           messagesStatus: messagesRes.status,
           projectsStatus: projectsRes.status,
           providerStatus: providerRes.status,
@@ -108,28 +107,28 @@ export default function ProviderDashboard() {
           projectsRes.status === 401 ||
           providerRes.status === 401
         ) {
-          throw new Error("Unauthorized: Invalid or expired token");
+          throw new Error('Unauthorized: Invalid or expired token');
         }
         if (projectsRes.status === 403) {
-          throw new Error("Not a provider");
+          throw new Error('Not a provider');
         }
         if (!messagesRes.ok) {
           const errorData = await messagesRes.json();
           throw new Error(
-            `Failed to fetch messages: ${errorData.error || "Unknown error"}`
+            `Failed to fetch messages: ${errorData.error || 'Unknown error'}`
           );
         }
         if (!projectsRes.ok) {
           const errorData = await projectsRes.json();
           throw new Error(
-            `Failed to fetch projects: ${errorData.error || "Unknown error"}`
+            `Failed to fetch projects: ${errorData.error || 'Unknown error'}`
           );
         }
         if (!providerRes.ok) {
           const errorData = await providerRes.json();
           throw new Error(
             `Failed to fetch provider data: ${
-              errorData.error || "Unknown error"
+              errorData.error || 'Unknown error'
             }`
           );
         }
@@ -137,7 +136,8 @@ export default function ProviderDashboard() {
         const messagesData = await messagesRes.json();
         const projectsData = await projectsRes.json();
         const providerData = await providerRes.json();
-        console.log("ProviderDashboard: Data fetched", {
+        const myBidsData = await bidsRes.json();
+        console.log('ProviderDashboard: Data fetched', {
           messages: messagesData.length,
           projects: projectsData.length,
           provider: providerData,
@@ -145,16 +145,17 @@ export default function ProviderDashboard() {
 
         setMessages(messagesData);
         setProjects(projectsData);
+        setMyBids(myBidsData);
         setProfileForm({
-          description: providerData.description || "",
-          service_type: providerData.service_type || "rwh",
-          price_range_min: providerData.price_range_min || "",
-          price_range_max: providerData.price_range_max || "",
-          service_areas: providerData.service_areas?.join(", ") || "",
-          services: providerData.services?.join(", ") || "",
+          description: providerData.description || '',
+          service_type: providerData.service_type || 'rwh',
+          price_range_min: providerData.price_range_min || '',
+          price_range_max: providerData.price_range_max || '',
+          service_areas: providerData.service_areas?.join(', ') || '',
+          services: providerData.services?.join(', ') || '',
         });
       } catch (err) {
-        console.error("ProviderDashboard: Fetch error:", err.message);
+        console.error('ProviderDashboard: Fetch error:', err.message);
         setError(err.message);
       } finally {
         setFetchLoading(false);
@@ -167,16 +168,16 @@ export default function ProviderDashboard() {
   const handleReply = async (messageId, receiverId) => {
     const content = replyContent[messageId]?.trim();
     if (!content) {
-      setError("Reply content cannot be empty");
+      setError('Reply content cannot be empty');
       return;
     }
 
     try {
-      const token = localStorage.getItem("accessToken");
-      const res = await fetch("http://localhost:5000/messages/reply", {
-        method: "POST",
+      const token = localStorage.getItem('accessToken');
+      const res = await fetch('http://localhost:5000/messages/reply', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
@@ -188,19 +189,22 @@ export default function ProviderDashboard() {
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(
-          `Failed to send reply: ${errorData.error || "Unknown error"}`
+          `Failed to send reply: ${errorData.error || 'Unknown error'}`
         );
       }
-      setReplyContent({ ...replyContent, [messageId]: "" });
-      alert("Reply sent successfully!");
-      const messagesRes = await fetch("http://localhost:5000/messages/provider", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      setReplyContent({ ...replyContent, [messageId]: '' });
+      alert('Reply sent successfully!');
+      const messagesRes = await fetch(
+        'http://localhost:5000/messages/provider',
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       if (messagesRes.ok) {
         setMessages(await messagesRes.json());
       }
     } catch (err) {
-      console.error("Reply error:", err);
+      console.error('Reply error:', err);
       setError(err.message);
     }
   };
@@ -208,16 +212,16 @@ export default function ProviderDashboard() {
   const handleBid = async (projectId) => {
     const { amount, description } = bidData[projectId] || {};
     if (!amount || amount <= 0) {
-      setError("Bid amount must be a positive number");
+      setError('Bid amount must be a positive number');
       return;
     }
 
     try {
-      const token = localStorage.getItem("accessToken");
-      const res = await fetch("http://localhost:5000/bids", {
-        method: "POST",
+      const token = localStorage.getItem('accessToken');
+      const res = await fetch('http://localhost:5000/bids', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
@@ -229,13 +233,13 @@ export default function ProviderDashboard() {
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(
-          `Failed to submit bid: ${errorData.error || "Unknown error"}`
+          `Failed to submit bid: ${errorData.error || 'Unknown error'}`
         );
       }
-      setBidData({ ...bidData, [projectId]: { amount: "", description: "" } });
-      alert("Bid submitted successfully!");
+      setBidData({ ...bidData, [projectId]: { amount: '', description: '' } });
+      alert('Bid submitted successfully!');
     } catch (err) {
-      console.error("Bid error:", err);
+      console.error('Bid error:', err);
       setError(err.message);
     }
   };
@@ -243,17 +247,17 @@ export default function ProviderDashboard() {
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
     if (!user?.providerId) {
-      setError("Provider ID not found");
+      setError('Provider ID not found');
       return;
     }
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = localStorage.getItem('accessToken');
       const res = await fetch(
         `http://localhost:5000/providers/${user.providerId}`,
         {
-          method: "PUT",
+          method: 'PUT',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
@@ -261,11 +265,11 @@ export default function ProviderDashboard() {
             price_range_min: Number(profileForm.price_range_min),
             price_range_max: Number(profileForm.price_range_max),
             service_areas: profileForm.service_areas
-              .split(",")
+              .split(',')
               .map((area) => area.trim())
               .filter((area) => area),
             services: profileForm.services
-              .split(",")
+              .split(',')
               .map((service) => service.trim())
               .filter((service) => service),
           }),
@@ -274,35 +278,35 @@ export default function ProviderDashboard() {
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(
-          `Failed to update profile: ${errorData.error || "Unknown error"}`
+          `Failed to update profile: ${errorData.error || 'Unknown error'}`
         );
       }
-      setProfileMessage("Profile updated successfully");
-      console.log("Updated provider:", await res.json());
+      setProfileMessage('Profile updated successfully');
+      console.log('Updated provider:', await res.json());
     } catch (err) {
       setProfileMessage(err.message);
-      console.error("Profile update error:", err);
+      console.error('Profile update error:', err);
     }
   };
 
   const handleImageUpload = async (e) => {
     e.preventDefault();
     if (!user?.providerId) {
-      setError("Provider ID not found");
+      setError('Provider ID not found');
       return;
     }
     if (!image) {
-      setProfileMessage("Please select an image");
+      setProfileMessage('Please select an image');
       return;
     }
     const formData = new FormData();
-    formData.append("image", image);
+    formData.append('image', image);
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = localStorage.getItem('accessToken');
       const res = await fetch(
         `http://localhost:5000/providers/${user.providerId}/image`,
         {
-          method: "POST",
+          method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
           body: formData,
         }
@@ -310,15 +314,15 @@ export default function ProviderDashboard() {
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(
-          `Failed to upload image: ${errorData.error || "Unknown error"}`
+          `Failed to upload image: ${errorData.error || 'Unknown error'}`
         );
       }
-      setProfileMessage("Image uploaded successfully");
+      setProfileMessage('Image uploaded successfully');
       setImage(null);
-      console.log("Uploaded image:", await res.json());
+      console.log('Uploaded image:', await res.json());
     } catch (err) {
       setProfileMessage(err.message);
-      console.error("Image upload error:", err);
+      console.error('Image upload error:', err);
     }
   };
 
@@ -339,7 +343,7 @@ export default function ProviderDashboard() {
         <div className="text-center">
           <p className="text-red-500 mb-4">{error}</p>
           <button
-            onClick={() => navigate("/login", { replace: true })}
+            onClick={() => navigate('/login', { replace: true })}
             className="bg-aqua-blue text-white py-2 px-4 rounded hover:bg-opacity-90"
           >
             Back to Login
@@ -358,6 +362,13 @@ export default function ProviderDashboard() {
         {profileMessage && (
           <p className="text-green-500 mb-4 text-center">{profileMessage}</p>
         )}
+
+        <section className="mb-10">
+          <h3 className="text-xl font-semibold mb-4 border-b pb-2">
+            Notifications
+          </h3>
+          <NotificationList />
+        </section>
 
         <section className="mb-10">
           <h3 className="text-xl font-semibold mb-4 border-b pb-2">
@@ -531,42 +542,43 @@ export default function ProviderDashboard() {
         </section>
 
         <section className="mb-10">
-          <h3 className="text-xl font-semibold mb-4 border-b pb-2">Messages</h3>
-          {messages.length === 0 ? (
-            <p>No messages received.</p>
+          <h3 className="text-xl font-semibold mb-4 border-b pb-2">My Bids</h3>
+          {myBids.length === 0 ? (
+            <p>No bids submitted yet.</p>
           ) : (
             <ul className="space-y-4">
-              {messages.map((msg) => (
-                <li key={msg.id} className="border p-4 rounded bg-gray-50">
-                  <p>
-                    <strong>From:</strong> {msg.sender_email}
-                    {msg.project_title
-                      ? ` (Project: ${msg.project_title})`
-                      : ""}
-                  </p>
-                  <p>{msg.content}</p>
-                  <p>
-                    <small>
-                      Sent: {new Date(msg.created_at).toLocaleString()}
-                    </small>
-                  </p>
-                  <textarea
-                    className="w-full p-2 border rounded mt-2"
-                    placeholder="Type your reply..."
-                    value={replyContent[msg.id] || ""}
-                    onChange={(e) =>
-                      setReplyContent({
-                        ...replyContent,
-                        [msg.id]: e.target.value,
-                      })
-                    }
-                  />
-                  <button
-                    onClick={() => handleReply(msg.id, msg.sender_id)}
-                    className="bg-aqua-blue text-white p-2 rounded mt-2"
-                  >
-                    Reply
-                  </button>
+              {myBids.map((bid) => (
+                <li key={bid.id} className="border p-4 rounded bg-gray-50">
+                  <div>
+                    <span className="font-semibold">Project:</span>{' '}
+                    {bid.project_title}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Amount:</span> KES{' '}
+                    {bid.amount}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Status:</span>{' '}
+                    <span
+                      className={
+                        bid.status === 'accepted'
+                          ? 'text-green-600'
+                          : bid.status === 'rejected'
+                          ? 'text-red-600'
+                          : 'text-gray-600'
+                      }
+                    >
+                      {bid.status}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-semibold">Date:</span>{' '}
+                    {new Date(bid.created_at).toLocaleString()}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Description:</span>{' '}
+                    {bid.description}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -590,44 +602,11 @@ export default function ProviderDashboard() {
                   <p>
                     <small>
                       Service: {project.service_type} | Budget: KES
-                      {project.budget || "N/A"} | Status: {project.status}
+                      {project.budget || 'N/A'} | Status: {project.status}
                     </small>
                   </p>
-                  <input
-                    type="number"
-                    className="w-full p-2 border rounded mt-2"
-                    placeholder="Bid Amount (KES)"
-                    value={bidData[project.id]?.amount || ""}
-                    onChange={(e) =>
-                      setBidData({
-                        ...bidData,
-                        [project.id]: {
-                          ...bidData[project.id],
-                          amount: e.target.value,
-                        },
-                      })
-                    }
-                  />
-                  <textarea
-                    className="w-full p-2 border rounded mt-2"
-                    placeholder="Bid Description (e.g., timeline, approach)"
-                    value={bidData[project.id]?.description || ""}
-                    onChange={(e) =>
-                      setBidData({
-                        ...bidData,
-                        [project.id]: {
-                          ...bidData[project.id],
-                          description: e.target.value,
-                        },
-                      })
-                    }
-                  />
-                  <button
-                    onClick={() => handleBid(project.id)}
-                    className="bg-aqua-blue text-white p-2 rounded mt-2"
-                  >
-                    Submit Bid
-                  </button>
+                  <BidForm projectId={project.id} onBidSubmitted={() => {}} />
+                  <BidList projectId={project.id} ownerId={project.user_id} />
                 </li>
               ))}
             </ul>
