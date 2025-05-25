@@ -612,6 +612,49 @@ export default function ProviderDashboard() {
             </ul>
           )}
         </section>
+
+        <section className="mb-10">
+          <h3 className="text-xl font-semibold mb-4 border-b pb-2">Messages</h3>
+          {messages.length === 0 ? (
+            <p>No messages received.</p>
+          ) : (
+            <ul className="space-y-4">
+              {messages.map((msg) => (
+                <li key={msg.id} className="border p-4 rounded bg-gray-50">
+                  <p>
+                    <strong>From:</strong> {msg.sender_email}
+                    {msg.project_title
+                      ? ` (Project: ${msg.project_title})`
+                      : ''}
+                  </p>
+                  <p>{msg.content}</p>
+                  <p>
+                    <small>
+                      Sent: {new Date(msg.created_at).toLocaleString()}
+                    </small>
+                  </p>
+                  <textarea
+                    className="w-full p-2 border rounded mt-2"
+                    placeholder="Type your reply..."
+                    value={replyContent[msg.id] || ''}
+                    onChange={(e) =>
+                      setReplyContent({
+                        ...replyContent,
+                        [msg.id]: e.target.value,
+                      })
+                    }
+                  />
+                  <button
+                    onClick={() => handleReply(msg.id, msg.sender_id)}
+                    className="bg-aqua-blue text-white p-2 rounded mt-2"
+                  >
+                    Reply
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
     </div>
   );
