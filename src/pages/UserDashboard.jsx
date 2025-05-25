@@ -1,98 +1,118 @@
-import { useState, useEffect, useContext } from "react";
-import { AuthContext } from "../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import ProjectForm from "../components/ProjectForm";
-import "../index.css";
+import { useState, useEffect, useContext } from 'react';
+import { AuthContext } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import ProjectForm from '../components/ProjectForm';
+import BidList from '../components/BidList';
+import NotificationList from '../components/NotificationList';
+import '../index.css';
 
 export default function UserDashboard() {
-  const { user, isAuthenticated, loading, attemptRefreshToken, accessToken } = useContext(AuthContext);
+  const { user, isAuthenticated, loading, attemptRefreshToken, accessToken } =
+    useContext(AuthContext);
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [messages, setMessages] = useState([]);
   const [error, setError] = useState(null);
   const [fetchLoading, setFetchLoading] = useState(false);
   const [replyContent, setReplyContent] = useState({});
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
 
   useEffect(() => {
-    console.log("UserDashboard: useEffect running", {
+    console.log('UserDashboard: useEffect running', {
       user,
       isAuthenticated,
       loading,
       localStorage: {
-        accessToken: !!localStorage.getItem("accessToken"),
-        refreshToken: !!localStorage.getItem("refreshToken"),
-        user: !!localStorage.getItem("user"),
+        accessToken: !!localStorage.getItem('accessToken'),
+        refreshToken: !!localStorage.getItem('refreshToken'),
+        user: !!localStorage.getItem('user'),
       },
     });
 
     if (loading) {
-      console.log("UserDashboard: Loading state, waiting...");
+      console.log('UserDashboard: Loading state, waiting...');
       return;
     }
 
     if (!isAuthenticated || !user) {
-      console.log("UserDashboard: Not authenticated, redirecting to /login");
-      navigate("/login", { replace: true });
+      console.log('UserDashboard: Not authenticated, redirecting to /login');
+      navigate('/login', { replace: true });
       return;
     }
 
-    if (user.role !== "user") {
-      console.log("UserDashboard: Non-user role, redirecting to /", {
+    if (user.role !== 'user') {
+      console.log('UserDashboard: Non-user role, redirecting to /', {
         role: user.role,
       });
-      navigate("/", { replace: true });
+      navigate('/', { replace: true });
       return;
     }
 
     const fetchData = async () => {
       setFetchLoading(true);
       try {
-        console.log("UserDashboard: Fetching data with token:", accessToken?.slice(0, 10) + "...");
-        let projectsResponse = await fetch("http://localhost:5000/projects/me", {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        let messagesResponse = await fetch("http://localhost:5000/messages/user", {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
+        console.log(
+          'UserDashboard: Fetching data with token:',
+          accessToken?.slice(0, 10) + '...'
+        );
+        let projectsResponse = await fetch(
+          'http://localhost:5000/projects/me',
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
+        let messagesResponse = await fetch(
+          'http://localhost:5000/messages/user',
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
 
         if (projectsResponse.status === 401) {
-          console.log("UserDashboard: 401 for projects, attempting token refresh");
-          const newToken = await attemptRefreshToken("fetchProjects");
-          projectsResponse = await fetch("http://localhost:5000/projects/me", {
+          console.log(
+            'UserDashboard: 401 for projects, attempting token refresh'
+          );
+          const newToken = await attemptRefreshToken('fetchProjects');
+          projectsResponse = await fetch('http://localhost:5000/projects/me', {
             headers: { Authorization: `Bearer ${newToken}` },
           });
         }
         if (messagesResponse.status === 401) {
-          console.log("UserDashboard: 401 for messages, attempting token refresh");
-          const newToken = await attemptRefreshToken("fetchMessages");
-          messagesResponse = await fetch("http://localhost:5000/messages/user", {
-            headers: { Authorization: `Bearer ${newToken}` },
-          });
+          console.log(
+            'UserDashboard: 401 for messages, attempting token refresh'
+          );
+          const newToken = await attemptRefreshToken('fetchMessages');
+          messagesResponse = await fetch(
+            'http://localhost:5000/messages/user',
+            {
+              headers: { Authorization: `Bearer ${newToken}` },
+            }
+          );
         }
 
         if (!projectsResponse.ok) {
           const errorData = await projectsResponse.json();
           throw new Error(
-            `Failed to fetch projects: ${errorData.error || "Unknown error"}`
+            `Failed to fetch projects: ${errorData.error || 'Unknown error'}`
           );
         }
         if (!messagesResponse.ok) {
           const errorData = await messagesResponse.json();
           throw new Error(
-            `Failed to fetch messages: ${errorData.error || "Unknown error"}`
+            `Failed to fetch messages: ${errorData.error || 'Unknown error'}`
           );
         }
 
         const projectsData = await projectsResponse.json();
         const messagesData = await messagesResponse.json();
-        console.log("UserDashboard: Data fetched", {
+        console.log('UserDashboard: Data fetched', {
           projects: projectsData.length,
           messages: messagesData.length,
         });
         setProjects(projectsData);
         setMessages(messagesData);
       } catch (err) {
-        console.error("UserDashboard: Fetch error:", err.message);
+        console.error('UserDashboard: Fetch error:', err.message);
         setError(err.message);
       } finally {
         setFetchLoading(false);
@@ -100,7 +120,14 @@ export default function UserDashboard() {
     };
 
     fetchData();
-  }, [user, isAuthenticated, loading, navigate, accessToken, attemptRefreshToken]);
+  }, [
+    user,
+    isAuthenticated,
+    loading,
+    navigate,
+    accessToken,
+    attemptRefreshToken,
+  ]);
 
   const handleProjectPosted = (newProject) => {
     setProjects([newProject, ...projects]);
@@ -109,16 +136,19 @@ export default function UserDashboard() {
   const handleReply = async (messageId, receiverId) => {
     const content = replyContent[messageId]?.trim();
     if (!content) {
-      setError("Reply content cannot be empty");
+      setError('Reply content cannot be empty');
       return;
     }
 
     try {
-      console.log("UserDashboard: Sending reply with token:", accessToken?.slice(0, 10) + "...");
-      let response = await fetch("http://localhost:5000/messages/reply", {
-        method: "POST",
+      console.log(
+        'UserDashboard: Sending reply with token:',
+        accessToken?.slice(0, 10) + '...'
+      );
+      let response = await fetch('http://localhost:5000/messages/reply', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
@@ -129,12 +159,12 @@ export default function UserDashboard() {
       });
 
       if (response.status === 401) {
-        console.log("UserDashboard: 401 for reply, attempting token refresh");
-        const newToken = await attemptRefreshToken("sendReply");
-        response = await fetch("http://localhost:5000/messages/reply", {
-          method: "POST",
+        console.log('UserDashboard: 401 for reply, attempting token refresh');
+        const newToken = await attemptRefreshToken('sendReply');
+        response = await fetch('http://localhost:5000/messages/reply', {
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
             Authorization: `Bearer ${newToken}`,
           },
           body: JSON.stringify({
@@ -148,20 +178,23 @@ export default function UserDashboard() {
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
-          `Failed to send reply: ${errorData.error || "Unknown error"}`
+          `Failed to send reply: ${errorData.error || 'Unknown error'}`
         );
       }
 
-      setReplyContent({ ...replyContent, [messageId]: "" });
-      alert("Reply sent successfully!");
-      const messagesResponse = await fetch("http://localhost:5000/messages/user", {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      setReplyContent({ ...replyContent, [messageId]: '' });
+      alert('Reply sent successfully!');
+      const messagesResponse = await fetch(
+        'http://localhost:5000/messages/user',
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
       if (messagesResponse.ok) {
         setMessages(await messagesResponse.json());
       }
     } catch (err) {
-      console.error("UserDashboard: Reply error:", err.message);
+      console.error('UserDashboard: Reply error:', err.message);
       setError(err.message);
     }
   };
@@ -183,7 +216,7 @@ export default function UserDashboard() {
         <div className="text-center">
           <p className="text-red-500 mb-4">{error}</p>
           <button
-            onClick={() => navigate("/login", { replace: true })}
+            onClick={() => navigate('/login', { replace: true })}
             className="bg-aqua-blue text-white py-2 px-4 rounded hover:bg-opacity-90"
           >
             Back to Login
@@ -199,6 +232,13 @@ export default function UserDashboard() {
         <h2 className="text-3xl font-bold text-aqua-blue mb-8 text-center">
           User Dashboard
         </h2>
+
+        <section className="mb-10">
+          <h3 className="text-xl font-semibold mb-4 border-b pb-2">
+            Notifications
+          </h3>
+          <NotificationList />
+        </section>
 
         <section className="mb-10">
           <h3 className="text-xl font-semibold mb-4 border-b pb-2">
@@ -219,7 +259,7 @@ export default function UserDashboard() {
                     <strong>From:</strong> {msg.sender_email}
                     {msg.project_title
                       ? ` (Project: ${msg.project_title})`
-                      : ""}
+                      : ''}
                   </p>
                   <p>{msg.content}</p>
                   <p>
@@ -230,7 +270,7 @@ export default function UserDashboard() {
                   <textarea
                     className="w-full p-2 border rounded mt-2"
                     placeholder="Type your reply..."
-                    value={replyContent[msg.id] || ""}
+                    value={replyContent[msg.id] || ''}
                     onChange={(e) =>
                       setReplyContent({
                         ...replyContent,
@@ -263,11 +303,11 @@ export default function UserDashboard() {
                   <p>
                     <strong>{project.title}</strong>
                   </p>
-                  <p>{project.description || "No description"}</p>
+                  <p>{project.description || 'No description'}</p>
                   <p>
                     <small>
                       Service: {project.service_type} | Budget: KES
-                      {project.budget || "N/A"} | Status: {project.status}
+                      {project.budget || 'N/A'} | Status: {project.status}
                     </small>
                   </p>
                   {project.lat && project.long && (
@@ -278,8 +318,31 @@ export default function UserDashboard() {
                     </p>
                   )}
                   <p>
-                    <small>Permit Required: {project.permit_required ? "Yes" : "No"}</small>
+                    <small>
+                      Permit Required: {project.permit_required ? 'Yes' : 'No'}
+                    </small>
                   </p>
+                  <button
+                    className="mt-2 bg-aqua-blue text-white px-3 py-1 rounded"
+                    onClick={() =>
+                      setSelectedProjectId(
+                        selectedProjectId === project.id ? null : project.id
+                      )
+                    }
+                  >
+                    {selectedProjectId === project.id
+                      ? 'Hide Bids'
+                      : 'View Bids'}
+                  </button>
+                  {selectedProjectId === project.id && (
+                    <div className="mt-4">
+                      <BidList
+                        projectId={project.id}
+                        ownerId={user.userId}
+                        onStatusChange={() => {}}
+                      />
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
