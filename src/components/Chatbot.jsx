@@ -85,6 +85,9 @@ export default function Chatbot() {
       }
     }
     const prompt = `${contextText}\nUser: ${question}\nAquaBot:`;
+    const url =
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' +
+      GEMINI_API_KEY;
     try {
       const res = await fetch(url, {
         method: 'POST',
