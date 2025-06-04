@@ -1,9 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useContext } from 'react';
+import { AuthContext } from '../contexts/AuthContext';
 
 const BACKEND_SEARCH_URL = 'http://localhost:5000/api/search';
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 export default function Chatbot() {
+  const { user, accessToken } = useContext(AuthContext);
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
@@ -48,6 +50,20 @@ export default function Chatbot() {
     return null;
   };
 
+  // Personalization: fetch user projects if needed
+  const fetchUserData = async () => {
+    if (!user?.userId || !accessToken) return null;
+    try {
+      const res = await fetch(`http://localhost:5000/projects/me`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  };
+
   const fetchBackendContext = async (query) => {
     try {
       const res = await fetch(
@@ -60,8 +76,14 @@ export default function Chatbot() {
     }
   };
 
-  const sendToGemini = async (question, context = null) => {
+  const sendToGemini = async (question, context = null, userData = null) => {
     let contextText = '';
+    if (userData?.length) {
+      contextText += 'User Projects:\n';
+      userData.forEach((p) => {
+        contextText += `Title: ${p.title}, Status: ${p.status}, Budget: ${p.budget}\n`;
+      });
+    }
     if (context) {
       if (context.faqs?.length) {
         contextText += 'Relevant FAQs:\n';
@@ -96,13 +118,18 @@ export default function Chatbot() {
           contents: [{ parts: [{ text: prompt }] }],
         }),
       });
+      if (!res.ok) {
+        if (res.status === 429)
+          return "Sorry, I've hit a query limit. Try again in a minute!";
+        throw new Error('Gemini API failed');
+      }
       const data = await res.json();
-      console.log('Gemini API response:', data); // <-- Add this line
       if (data?.candidates?.[0]?.content?.parts?.[0]?.text) {
         return data.candidates[0].content.parts[0].text.trim();
       }
       return "Sorry, I couldn't get an answer right now.";
-    } catch {
+    } catch (err) {
+      console.error('Gemini error:', err);
       return "Sorry, I couldn't connect to the AI service.";
     }
   };
@@ -123,7 +150,9 @@ export default function Chatbot() {
     } else {
       // Only call Gemini if FAQ not found
       const context = await fetchBackendContext(input);
-      botMsg = await sendToGemini(input, context);
+      // Personalize if user asks about "my project"
+      const userData = /my project/i.test(input) ? await fetchUserData() : null;
+      botMsg = await sendToGemini(input, context, userData);
     }
     setMessages((msgs) => [...msgs, { from: 'bot', text: botMsg }]);
     setLoading(false);
@@ -185,6 +214,7 @@ export default function Chatbot() {
           </div>
           <div className="p-2 border-t flex gap-2">
             <textarea
+              aria-label="Chat with AquaBot"
               className="flex-1 border rounded px-2 py-1 text-sm resize-none focus:ring-2 focus:ring-aqua-blue"
               rows={1}
               value={input}
