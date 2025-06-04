@@ -14,6 +14,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import AboutUs from "./pages/AboutUs";
 import FAQ from "./pages/FAQ";
 import HowItWorksPage from "./pages/HowItWorksPage";
+import Chatbot from "./components/Chatbot";
 
 function App() {
   const { loading } = useContext(AuthContext);
@@ -45,6 +46,7 @@ function App() {
   return (
     <>
       {showNavbar && <Navbar />}
+      <Chatbot />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route
